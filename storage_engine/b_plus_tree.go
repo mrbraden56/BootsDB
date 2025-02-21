@@ -1,21 +1,24 @@
 package storage_engine
 
 //TODO:
-//I need to figure out how to read in meta data from the b tree if a file already exists
-//I am thinking I need to keep a counter for keys but that seems like to much overhead, I think I need to watch more videos on b trees
+//1. Write the select functionality that prints out every row
+//2. Generate tests using io functionalitu fir e2e testing
+//3. Rewrite anything you want for the program, ensure tests still past, and continue to tree splitting
 
 import (
 	"encoding/binary"
 	"io"
 	"os"
+	"strings"
+	"fmt"
 )
 
 type NodeType int
 
 const (
-	ROOT_NODE_TYPE = 0
+	ROOT_NODE_TYPE        = 0
 	LEAF_NODE_KV_STARTING = 11
-	MAX_ROW_ID_ROOT = 2
+	MAX_ROW_ID_ROOT       = 2
 )
 
 type Page struct {
@@ -73,6 +76,27 @@ func (c *Cursor) Initialize(file_name string) {
 	c.pager.num_pages = int(size) / 4096
 	if c.pager.num_pages == 0 {
 		c.create_root()
+	} else {
+		file, err := os.Open(c.file_name)
+		if err != nil {
+			return
+		}
+		defer file.Close()
+		buffer := make([]byte, len(c.pager.cached_pages[c.pager.num_pages-1].array))
+		_, err = file.Read(buffer)
+		if err != nil && err != io.EOF {
+			return
+		}
+		var array [4096]byte
+		copy(array[:], buffer[:]) // Copy bytes from buffer[n:] into array
+		root_page := &Page{
+			array:     array,
+			has_space: array[MAX_ROW_ID_ROOT] <= 12,
+		}
+		if len(c.pager.cached_pages) == 0 {
+			c.pager.cached_pages = make([]*Page, 1) // Allocate space
+		}
+		c.pager.cached_pages[0] = root_page
 	}
 }
 
@@ -106,34 +130,10 @@ func (c *Cursor) Insert(username string, email string) {
 		position := LEAF_NODE_KV_STARTING + (curr_key * 291)
 		binary.BigEndian.PutUint32(page.array[position:position+4], curr_key)
 		copy(page.array[position+4:position+291], tuple)
-		page.array[MAX_ROW_ID_ROOT] +=1
+		page.array[MAX_ROW_ID_ROOT] += 1
 	}
 
-	var root_page *Page
-	if len(c.pager.cached_pages) != 0 {
-		root_page = c.pager.cached_pages[0]
-	} else {
-		file, err := os.Open(c.file_name)
-		if err != nil {
-			return
-		}
-		defer file.Close() 
-		buffer := make([]byte, len(c.pager.cached_pages[c.pager.num_pages-1].array))
-		_, err = file.Read(buffer)
-		if err != nil && err != io.EOF {
-			return
-		}
-		var array [4096]byte
-		copy(array[:], buffer[:])  // Copy bytes from buffer[n:] into array
-		root_page = &Page{
-			array: array,
-			has_space: array[MAX_ROW_ID_ROOT] <= 12,
-		}
-	if len(c.pager.cached_pages) == 0 {
-        c.pager.cached_pages = make([]*Page, 1) // Allocate space
-    }
-		c.pager.cached_pages[0] = root_page
-	}
+	root_page := c.pager.cached_pages[0]
 
 	curr_page := root_page
 	for {
@@ -157,7 +157,23 @@ func (c *Cursor) Insert(username string, email string) {
 }
 
 func (c *Cursor) Select() {
-
+    root_page := c.pager.cached_pages[0]
+    
+    num_records := root_page.array[MAX_ROW_ID_ROOT]
+    
+    for key := 0; key < int(num_records); key++ {
+        position := LEAF_NODE_KV_STARTING + key*291
+        
+        record_key := binary.BigEndian.Uint32(root_page.array[position : position+4])
+        
+        username_bytes := root_page.array[position+4 : position+36]
+        username := strings.TrimRight(string(username_bytes), "\x00")
+        
+        email_bytes := root_page.array[position+36 : position+291]
+        email := strings.TrimRight(string(email_bytes), "\x00")
+        
+        fmt.Printf("Key: %d, Username: %s, Email: %s\n", record_key, username, email)
+    }
 }
 
 func (c *Cursor) Flush() {
