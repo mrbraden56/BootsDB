@@ -1,7 +1,7 @@
 package main
 
 import (
-	"BootsDB/storage_engine"
+	"BootsDB/storage_manager"
 	"bufio"
 	"fmt"
 	"os"
@@ -29,14 +29,15 @@ func scanQuery(input string) QueryType {
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)
 
-	storage_engine := storage_engine.NewStorageEngine("Boots.db")
+	storage_engine := storage_manager.InitializeStorage("Boots.db")
+	pager := storage_manager.InitializePager(storage_engine)
+	btree := storage_manager.InitializeBtree(pager)
 	for {
 		fmt.Print("BootsDB> ")
 		scanner.Scan()
 		input := scanner.Text()
 
 		if input == ".exit" {
-			storage_engine.Flush()
 			break
 		}
 
@@ -45,13 +46,21 @@ func main() {
 			parts := strings.Fields(input)
 			username := parts[1]
 			email := parts[2]
-			storage_engine.Insert(username, email)
+			btree.Insert(username, email)
 
 		case SELECT:
-			storage_engine.Select()
+			btree.Select()
 
 		default:
 			fmt.Println("Unknown command")
 		}
 	}
 }
+
+//TODO:
+//Work on select functionality: DONE
+//Work on marking pages dirty when we change cached pages
+//Work on writing back to disk
+//Ensure we have correct functionality for when root gets full
+//Ensure tests work
+

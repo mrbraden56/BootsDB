@@ -1,9 +1,6 @@
-package storage_engine
+package main
 
 //TODO:
-//1. Write the select functionality that prints out every row
-//2. Generate tests using io functionalitu fir e2e testing
-//3. Rewrite anything you want for the program, ensure tests still past, and continue to tree splitting
 
 import (
 	"encoding/binary"
@@ -24,7 +21,7 @@ const (
 	USERNAME_SIZE         = 32
 	EMAIL_SIZE            = 179
 	SLOT_SIZE             = KEY_SIZE + USERNAME_SIZE + EMAIL_SIZE
-	MAX_SLOTS_IN_PAGE = (PAGE_SIZE - LEAF_NODE_KV_STARTING) / SLOT_SIZE
+	MAX_SLOTS_IN_PAGE     = (PAGE_SIZE - LEAF_NODE_KV_STARTING) / SLOT_SIZE
 )
 
 type Page struct {
@@ -39,7 +36,6 @@ type Pager struct {
 		Pager acts as buffer pool manager by hanlding blocks of data,
 		writing to disk, and checking cache
 	*/
-	num_pages    int
 	cached_pages []*Page
 }
 
@@ -60,7 +56,6 @@ func (c *Cursor) Initialize(file_name string) {
 		fileInfo, _ = file.Stat()
 	}
 	size := fileInfo.Size()
-	c.pager.num_pages = int(size) / PAGE_SIZE
 	root_doesnt_exists := (int(size) / PAGE_SIZE) == 0
 	if root_doesnt_exists {
 		root_page := Page{
@@ -76,14 +71,13 @@ func (c *Cursor) Initialize(file_name string) {
 		binary.BigEndian.PutUint32(root_page.array[7:11], num_cells)
 
 		c.pager.cached_pages = append(c.pager.cached_pages, &root_page)
-		c.pager.num_pages += 1
 	} else {
 		file, err := os.Open(c.file_name)
 		if err != nil {
 			return
 		}
 		defer file.Close()
-		buffer := make([]byte, len(c.pager.cached_pages[c.pager.num_pages-1].array))
+		buffer := make([]byte, len(c.pager.cached_pages[0].array))
 		_, err = file.Read(buffer)
 		if err != nil && err != io.EOF {
 			return
@@ -137,7 +131,8 @@ func (c *Cursor) Insert(username string, email string) {
 
 	curr_page := root_page
 	for {
-		if curr_page.array[MAX_ROW_ID_ROOT] <= MAX_SLOTS_IN_PAGE {
+		curr_page_has_space := curr_page.array[MAX_ROW_ID_ROOT] <= MAX_SLOTS_IN_PAGE
+		if curr_page_has_space {
 			break
 		}
 
@@ -177,7 +172,7 @@ func (c *Cursor) Select() {
 }
 
 func (c *Cursor) Flush() {
-	os.WriteFile(c.file_name, c.pager.cached_pages[c.pager.num_pages-1].array[:], 0644)
+	os.WriteFile(c.file_name, c.pager.cached_pages[0].array[:], 0644)
 }
 
 func NewStorageEngine(file_name string) *Cursor {
