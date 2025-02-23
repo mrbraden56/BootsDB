@@ -14,7 +14,11 @@ func (storage *Storage) get_root_from_disk() *[4096]byte {
 	var buffer [4096]byte
 	storage.file.Read(buffer[:])
 	return &buffer
+}
 
+func (storage *Storage) write_page_to_disk(page *Page) {
+	page_number := page.page_number
+	storage.file.WriteAt(page.slotted_array[:], int64(page_number)*4096)
 }
 
 func InitializeStorage(file_name string) *Storage {

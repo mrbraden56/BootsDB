@@ -40,6 +40,16 @@ func (btree *BTree) Insert(username string, email string) {
 	// Calculate tuple offset (cells grow backwards from the end)
 	tupleOffset := C - tupleSize
 
+	//Calculate cell pointer array (starts at 100, 2 bytes per pointer)
+	pointerOffset := uint32(header_size) + 2*uint32(N)
+
+	//Page overflow, need to split
+	if tupleOffset <= pointerOffset{
+		fmt.Println("Page Overflow")
+		return
+	}
+
+
 	// Build tuple
 	tuple := make([]byte, tupleSize)
 	binary.BigEndian.PutUint16(tuple[0:2], payloadSize)
@@ -50,8 +60,8 @@ func (btree *BTree) Insert(username string, email string) {
 	copy(tuple[2:34], username32)
 	copy(tuple[34:], email255)
 
-	// Update cell pointer array (starts at 100, 2 bytes per pointer)
-	pointerOffset := uint32(header_size) + 2*uint32(N)
+
+	//Update cell pointer array (starts at 100, 2 bytes per pointer)
 	binary.BigEndian.PutUint16(root.slotted_array[pointerOffset:pointerOffset+2], uint16(tupleOffset))
 
 	// Copy tuple into page
@@ -62,6 +72,9 @@ func (btree *BTree) Insert(username string, email string) {
 	binary.BigEndian.PutUint32(root.slotted_array[8:12], tupleOffset)   // Update cell content offset
 	newFreeBytes := tupleOffset - (uint32(header_size) + 2*uint32(N+1)) // Calculate remaining free bytes
 	binary.BigEndian.PutUint32(root.slotted_array[12:16], newFreeBytes) // Update free bytes
+	
+	//Mark page as dirty
+	root.dirty = true
 }
 
 func (btree *BTree) Select() {

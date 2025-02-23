@@ -38,6 +38,7 @@ func main() {
 		input := scanner.Text()
 
 		if input == ".exit" {
+			pager.FlushCache()
 			break
 		}
 
@@ -63,4 +64,9 @@ func main() {
 //Work on writing back to disk
 //Ensure we have correct functionality for when root gets full
 //Ensure tests work
+
+
+//TODO Later
+//Implement LRU Cache or similart to update cache
+//Implement journaling/write ahead logging(WAL) which saves data when db crashes
 

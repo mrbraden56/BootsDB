@@ -44,6 +44,13 @@ func (pager *Pager) get_root() *Page {
 	return page
 }
 
+func (pager *Pager) FlushCache(){
+	root := pager.cache.content[0]
+	if root.dirty{
+		pager.storage.write_page_to_disk(root)
+	}
+}
+
 func InitializePager(storage_struct *Storage) *Pager {
 	cache := &PageCache{
 		content: make(map[int]*Page), // Initialize the map to avoid nil map panics.
