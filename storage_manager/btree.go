@@ -76,26 +76,26 @@ type BTree struct {
 	order int
 }
 
-// func (btree *BTree) binary_search(page *Pager) {
+func (btree *BTree) binary_search(page *Pager) {
 
-// }
+}
 
-// func (btree *BTree) find_leaf_node(root *Page, key uint32) *Page {
+func (btree *BTree) find_leaf_node(root *Page, key uint32) *Page {
 
-// }
+}
 
-// func (btree *BTree) Insert(username string, email string) {
-// 	root := btree.pager.get_root()
-// 	key := binary.BigEndian.Uint32(root.slotted_array[16:20])
-// 	leafNode := btree.find_leaf_node(root, key)             // Traverse to leaf using the key
-// 	N := binary.BigEndian.Uint16(leafNode.slotted_array[6:8]) // Number of cells in the leaf
-// 	pageFull := N >= uint16(btree.order-1)                    // Max keys = order - 1
-// 	if pageFull {
-// 		btree.split_and_insert(leafNode, username, email)
-// 	} else {
-// 		btree.insert_into_page_slot(leafNode, username, email)
-// 	}
-// }
+func (btree *BTree) Insert(username string, email string) {
+	root := btree.pager.get_root()
+	key := binary.BigEndian.Uint32(root.slotted_array[16:20])
+	leafNode := btree.find_leaf_node(root, key)             // Traverse to leaf using the key
+	N := binary.BigEndian.Uint16(leafNode.slotted_array[6:8]) // Number of cells in the leaf
+	pageFull := N >= uint16(btree.order-1)                    // Max keys = order - 1
+	if pageFull {
+		btree.split_and_insert(leafNode, username, email)
+	} else {
+		btree.insert_into_page_slot(leafNode, username, email)
+	}
+}
 
 func (btree *BTree) Insert(username string, email string) {
     root := btree.pager.get_root()
