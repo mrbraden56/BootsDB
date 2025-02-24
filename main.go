@@ -58,15 +58,17 @@ func main() {
 	}
 }
 
-//TODO:
+//DONE:
 //Work on select functionality: DONE
-//Work on marking pages dirty when we change cached pages
-//Work on writing back to disk
-//Ensure we have correct functionality for when root gets full
-//Ensure tests work
+//Work on marking pages dirty when we change cached pages DONE
+//Work on writing back to disk DONE
+//Ensure we have correct functionality for when root gets full DONE
+//Ensure tests work DONE
 
+//TODO:
+//Implement splitting algorithm in insert when page gets full
 
-//TODO Later
+//TODO LATER:
 //Implement LRU Cache or similart to update cache
 //Implement journaling/write ahead logging(WAL) which saves data when db crashes
 

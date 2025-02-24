@@ -36,7 +36,6 @@ func (pager *Pager) get_root() *Page {
 		page = &Page{
 			slotted_array: *root_slotted_array,
 			dirty:         false,
-			page_number:   0,
 		}
 		pager.cache.content[0] = page
 	}
