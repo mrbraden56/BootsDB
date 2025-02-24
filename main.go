@@ -67,7 +67,7 @@ func main() {
 
 //TODO:
 //Make sure we have critical db architecture set up
-//	-Look at section 2 of the sqlite architecure and make sure we implement things like tables/indicies
+//	-Look at section 2 of the sqlite architecure and make sure we implement things like tables/indicies.
 //Implement splitting algorithm in insert when page gets full
 
 //TODO LATER:
