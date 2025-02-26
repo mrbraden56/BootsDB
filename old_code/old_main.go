@@ -1,59 +1,61 @@
 package main
 
 import (
-	"BootsDB/query_processor"
-	"io"
-	"log"
-	"unicode"
+	"BootsDB/storage_manager"
+	"bufio"
+	"fmt"
+	"os"
+	"strings"
 )
 
+type QueryType string
+
+const (
+	INSERT QueryType = "INSERT"
+	SELECT QueryType = "SELECT"
+)
+
+func scanQuery(input string) QueryType {
+	cmd := strings.ToUpper(strings.TrimSpace(input))
+	if strings.HasPrefix(cmd, string(INSERT)) {
+		return INSERT
+	}
+	if strings.HasPrefix(cmd, string(SELECT)) {
+		return SELECT
+	}
+	return ""
+}
+
 func main() {
-	scanner, err := query_processor.NewScanner("queries/query1.sql")
-	if err != nil {
-		log.Fatal(err)
-	}
+	scanner := bufio.NewScanner(os.Stdin)
+
+	storage_engine := storage_manager.InitializeStorage("Boots.db")
+	pager := storage_manager.InitializePager(storage_engine)
+	btree := storage_manager.InitializeBtree(pager)
 	for {
-		err := scanner.Next()
-		if err == io.EOF {
-			break // End of file reached
-		}
-		if err != nil {
-			log.Fatal(err) // Handle any other errors
+		fmt.Print("BootsDB> ")
+		scanner.Scan()
+		input := scanner.Text()
+
+		if input == ".exit" {
+			pager.FlushCache()
+			break
 		}
 
-		//NOTE: For Keywords
-		var current_char string
-		if unicode.IsDigit(scanner.CurrentRune) {
-			cur := int(scanner.CurrentRune - '0')
-			scanner.AddNumberToken(cur)
-			continue
-		}else {
-			current_char = string(scanner.CurrentRune) // Convert to string, e.g., "a"
-		} 
-			
-		switch {
-		case current_char == " ":
-			continue // EqualsOperator
-		case current_char == "=":
-			scanner.AddToken("=") // EqualsOperator
-		case current_char == ";":
-			scanner.AddToken(";") // SemicolonOperator
-		case current_char == ",":
-			scanner.AddToken(",") // CommaOperator
-		case current_char == "*":
-			scanner.AddToken("*") // AsteriskOperator
-		case current_char == "'":
-			scanner.AddToken("'")
-		case current_char == "(":
-			scanner.AddToken("(") // LeftParenOperator
-		case current_char == ")":
-			scanner.AddToken(")") // RightParenOperator
-		case scanner.IsChar():
-			text := scanner.GetWord()
-			scanner.AddToken(text)
+		switch scanQuery(input) {
+		case INSERT:
+			parts := strings.Fields(input)
+			username := parts[1]
+			email := parts[2]
+			btree.Insert(username, email)
+
+		case SELECT:
+			btree.Select()
+
+		default:
+			fmt.Println("Unknown command")
 		}
 	}
-
 }
 
 //DONE:
@@ -69,7 +71,7 @@ func main() {
 //	-The reason I am doing this is to create a clean interface between parse/b+ tree since this interface
 //	 may change some parts of the b+ tree
 //	-Example
-// Query: SELECT customer_name, SUM(order_total)
+// Query: SELECT customer_name, SUM(order_total) 
 //        FROM customers JOIN orders ON customers.id = orders.customer_id
 //        WHERE order_date > '2023-01-01'
 //        GROUP BY customer_name
@@ -91,9 +93,9 @@ func main() {
 //                               Table Scan (orders)
 //
 // High Level Overview of Query Execution:
-// SQL query execution involves parsing a query into a syntax
+// SQL query execution involves parsing a query into a syntax 
 // tree(Do we have to transform to tree first or can we just create DAG first), transforming it into a
-// logical plan, optimizing it into a physical Directed Acyclic Graph (DAG), and then
+// logical plan, optimizing it into a physical Directed Acyclic Graph (DAG), and then 
 // executing this DAG by flowing data through each node where specific operations transform
 // the data until it reaches the final node, producing the requested result.
 
