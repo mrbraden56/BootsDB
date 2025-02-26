@@ -28,7 +28,6 @@ package query_processor
 import (
 	"io"
 	"os"
-	"strconv"
 	"unicode"
 )
 
@@ -36,7 +35,7 @@ var TokenMap = map[string]string{
 	"select":      "Keyword",
 	"from":        "Keyword",
 	"where":       "Keyword",
-	"insert_into":      "Keyword",
+	"insert_into": "Keyword",
 	"update":      "Keyword",
 	"delete":      "Keyword",
 	"create":      "Keyword",
@@ -61,7 +60,7 @@ var TokenMap = map[string]string{
 
 type Token struct {
 	Token_type string
-	Val string
+	Val        string
 	is_int     bool
 	line       int
 }
@@ -79,18 +78,17 @@ type Scanner struct {
 	column        int    // Next column position
 }
 
-func (s *Scanner) AddNumberToken(num int) {
-	token := &Token{
-		Token_type: "Literal",
-		Val: strconv.Itoa(num),
-		line: s.CurrentLine,
-		is_int: true,
+func (s *Scanner) AddToken(text string, is_int bool) {
+	if is_int {
+		token := &Token{
+			Token_type: "Literal",
+			Val:        text,
+			line:       s.CurrentLine,
+			is_int:     is_int,
+		}
+		s.Tokens = append(s.Tokens, token)
+		return
 	}
-
-	s.Tokens = append(s.Tokens, token)
-}
-
-func (s *Scanner) AddToken(text string) {
 	token_type := TokenMap[text]
 	if text == "'" {
 		s.Next()
@@ -103,9 +101,9 @@ func (s *Scanner) AddToken(text string) {
 	}
 	token := &Token{
 		Token_type: string(token_type),
-		Val: text,
-		line:   s.CurrentLine,
-		is_int: false,
+		Val:        text,
+		line:       s.CurrentLine,
+		is_int:     is_int,
 	}
 	s.Tokens = append(s.Tokens, token)
 }

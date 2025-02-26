@@ -22,36 +22,29 @@ func TestScannerFunctionality(t *testing.T) {
 			log.Fatal(err) // Handle any other errors
 		}
 
-		//NOTE: For Keywords
-		var current_char string
-		if unicode.IsDigit(scanner.CurrentRune) {
-			cur := int(scanner.CurrentRune - '0')
-			scanner.AddNumberToken(cur)
-			continue
-		} else {
-			current_char = string(scanner.CurrentRune) // Convert to string, e.g., "a"
-		}
-
+		current_char := string(scanner.CurrentRune) 
 		switch {
 		case current_char == " ":
-			continue // EqualsOperator
+			continue 
+		case unicode.IsDigit(scanner.CurrentRune):  
+			scanner.AddToken(current_char, true)
 		case current_char == "=":
-			scanner.AddToken("=") // EqualsOperator
+			scanner.AddToken("=", false) 
 		case current_char == ";":
-			scanner.AddToken(";") // SemicolonOperator
+			scanner.AddToken(";", false) 
 		case current_char == ",":
-			scanner.AddToken(",") // CommaOperator
+			scanner.AddToken(",", false) 
 		case current_char == "*":
-			scanner.AddToken("*") // AsteriskOperator
+			scanner.AddToken("*", false) 
 		case current_char == "'":
-			scanner.AddToken("'")
+			scanner.AddToken("'", false)
 		case current_char == "(":
-			scanner.AddToken("(") // LeftParenOperator
+			scanner.AddToken("(", false) 
 		case current_char == ")":
-			scanner.AddToken(")") // RightParenOperator
+			scanner.AddToken(")", false) 
 		case scanner.IsChar():
 			text := scanner.GetWord()
-			scanner.AddToken(text)
+			scanner.AddToken(text, false)
 		}
 	}
 
